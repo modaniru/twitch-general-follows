@@ -1,1 +1,12 @@
+[server]
 port=":8080"
+
+[URI]
+user_info="https://api.twitch.tv/helix/users"
+user_get_follow_list="https://api.twitch.tv/helix/users/follows"
+get_token="https://id.twitch.tv/oauth2/token"
+validate_token="https://id.twitch.tv/oauth2/validate"
+
+[twitch]
+client_id="your apps client id"
+client_secret="your apps client secret"
