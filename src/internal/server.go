@@ -12,6 +12,10 @@ func NewServer(configPath string) *server{
 }
 
 func (s *server)Start(){
-	//todo routing methods
+	s.initRouters()
 	s.Router.Run(s.Config.Port)
+}
+
+func (s *server)initRouters(){
+	s.Router.GET("/ping", ping)
 }
