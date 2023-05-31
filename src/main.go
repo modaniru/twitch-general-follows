@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	server := internal.NewServer("config.toml")
+	server := internal.NewServer("config.toml", "twitch-cfg.toml")
 	server.Start()
 }
