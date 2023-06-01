@@ -38,40 +38,32 @@ func (s *server) getGeneralFollows(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	result := make(map[string]string)
-	resp, err := s.queries.GetFollows(response.Data[0].Id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-	for _, v := range *resp{
-		result[v.ToName] = v.ToName
-	}
+	result := make(map[string]bool)
+	channel := make(chan *[]twitch.FollowInfo)
+	go s.queries.GetFollows((*response)[0].Id, channel)
 
-	for i := 1; i < len(response.Data); i++{
-		newMap := make(map[string]string)
-		resp, err := s.queries.GetFollows(response.Data[i].Id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-			return
+	for i := 1; i < len(*response); i++ {
+		go s.queries.GetFollows((*response)[i].Id, channel)
+	}
+	list := <- channel
+	if list == nil{
+		c.JSON(http.StatusInternalServerError, "")
+	}
+	for _, v := range *list{
+		result[v.ToName] = true
+	}
+	for i := 1; i < len(*response); i++{
+		temp := make(map[string]bool)
+		list = <- channel
+		if list == nil{
+			c.JSON(http.StatusInternalServerError, "")
 		}
-		for _, v := range *resp{
-			_, ok := result[v.ToName]
-			if ok {
-				newMap[v.ToName] = v.ToName
+		for _, v := range *list{
+			if result[v.ToName]{
+				temp[v.ToName] = true
 			}
 		}
-		result = newMap
-
+		result = temp
 	}
 	c.JSON(http.StatusOK, result)
-}
-
-func (s *server) GetFollows(c *gin.Context){
-	response, err := s.queries.GetFollows("171985899")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, response)
 }
