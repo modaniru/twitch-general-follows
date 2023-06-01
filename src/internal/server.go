@@ -57,6 +57,7 @@ func (s *server) getGeneralFollows(c *gin.Context) {
 		list = <- channel
 		if list == nil{
 			c.JSON(http.StatusInternalServerError, "")
+			return
 		}
 		for _, v := range *list{
 			if result[v.ToName]{
