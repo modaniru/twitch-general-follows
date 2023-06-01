@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/modaniru/twitch-general-follows/src/internal"
+)
 
 func main() {
-	fmt.Println("Hello")
+	server := internal.NewServer("config.toml", "twitch-cfg.toml")
+	server.Start()
 }
