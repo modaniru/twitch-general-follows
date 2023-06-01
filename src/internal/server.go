@@ -24,7 +24,7 @@ func (s *server) Start() {
 
 func (s *server) initRouters() {
 	s.Router.GET("/ping", s.ping)
-	s.Router.GET("/get/", s.getGeneralFollows)
+	s.Router.GET("/get", s.getGeneralFollows)
 }
 
 func (s *server) ping(c *gin.Context) {
