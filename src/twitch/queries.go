@@ -41,7 +41,6 @@ func NewQueries(cfgPath string) *Queries {
 
 func (q *Queries) GetOauthToken() (*OauthToken, error) {
 	uri := fmt.Sprintf("%s?client_id=%s&client_secret=%s&grant_type=client_credentials", q.GetTokenURI, q.ClientId, q.ClientSecret)
-	fmt.Println(uri)
 	res, err := q.client.Post(uri, nil, nil)
 	if err != nil {
 		return nil, err
@@ -81,17 +80,17 @@ func (q *Queries) IsValid() (*ValidToken, error) {
 	return &response, nil
 }
 
-func (q *Queries) GetUsersInfo(nicknames []string) (*[]UserInfo, error) {
-	iterations := len(nicknames) / 100 + 1
+func (q *Queries) GetUsersInfo(data []string, dataType string) (*[]UserInfo, error) {
+	iterations := len(data)/100 + 1
 	channel := make(chan *UserCollection)
-	for len(nicknames) > 100{
-		go q.getUsersInfoRoutine(nicknames[:100], channel)
-		nicknames = nicknames[100:]
+	for len(data) > 100 {
+		go q.getUsersInfoRoutine(data[:100], dataType, channel)
+		data = data[100:]
 	}
-	go q.getUsersInfoRoutine(nicknames, channel)
+	go q.getUsersInfoRoutine(data, dataType, channel)
 	res := []UserInfo{}
-	for i := 0; i < iterations; i++{
-		userCollection := <- channel
+	for i := 0; i < iterations; i++ {
+		userCollection := <-channel
 		if userCollection == nil {
 			return nil, errors.New("GetUsersInfo(nicknames []string)")
 		}
@@ -100,14 +99,14 @@ func (q *Queries) GetUsersInfo(nicknames []string) (*[]UserInfo, error) {
 	return &res, nil
 }
 
-func (q *Queries) getUsersInfoRoutine(nicknames []string, channel chan *UserCollection){
+func (q *Queries) getUsersInfoRoutine(users []string, t string, channel chan *UserCollection) {
 	uri := q.UserInfoURI
-	for i, v := range nicknames {
+	for i, v := range users {
 		symb := "&"
 		if i == 0 {
 			symb = "?"
 		}
-		uri = fmt.Sprintf("%s%slogin=%s", uri, symb, v)
+		uri = fmt.Sprintf("%s%s%s=%s", uri, symb, t, v)
 	}
 	header := http.Header{}
 	token := "Bearer " + "udbafm1cghmrgy9aw9xf707360ibwp"
@@ -156,7 +155,7 @@ func (q *Queries) GetFollows(id string, ch chan *[]FollowInfo) {
 		uri2 := fmt.Sprintf("%s&after=%s", uri, response.Pagination.Cursor)
 		go q.getFollowsWithoutPagination(uri2, channel)
 		response = <-channel
-		if response == nil{
+		if response == nil {
 			ch <- nil
 			return
 		}

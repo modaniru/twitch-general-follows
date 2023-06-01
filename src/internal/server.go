@@ -33,7 +33,7 @@ func (s *server) ping(c *gin.Context) {
 
 func (s *server) getGeneralFollows(c *gin.Context) {
 	nicknames := c.QueryArray("login")
-	response, err := s.queries.GetUsersInfo(nicknames)
+	response, err := s.queries.GetUsersInfo(nicknames, "login")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -45,27 +45,38 @@ func (s *server) getGeneralFollows(c *gin.Context) {
 	for i := 1; i < len(*response); i++ {
 		go s.queries.GetFollows((*response)[i].Id, channel)
 	}
-	list := <- channel
-	if list == nil{
-		c.JSON(http.StatusInternalServerError, "")
+	list := <-channel
+	if list == nil {
+		c.JSON(http.StatusInternalServerError, "НЕ ТУТ")
 		return
 	}
-	for _, v := range *list{
-		result[v.ToName] = true
+	for _, v := range *list {
+		result[v.ToId] = true
 	}
-	for i := 1; i < len(*response); i++{
+	for i := 1; i < len(*response); i++ {
 		temp := make(map[string]bool)
-		list = <- channel
-		if list == nil{
-			c.JSON(http.StatusInternalServerError, "")
+		list = <-channel
+		if list == nil {
+			c.JSON(http.StatusInternalServerError, "ТУТ")
 			return
 		}
-		for _, v := range *list{
-			if result[v.ToName]{
-				temp[v.ToName] = true
+		for _, v := range *list {
+			if result[v.ToId] {
+				temp[v.ToId] = true
 			}
 		}
 		result = temp
 	}
-	c.JSON(http.StatusOK, result)
+	nicknamesList := make([]string, len(result))
+	i := 0
+	for k := range result {
+		nicknamesList[i] = k
+		i++
+	}
+	ress, err := s.queries.GetUsersInfo(nicknamesList, "id")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, ress)
 }
