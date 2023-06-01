@@ -24,15 +24,51 @@ func (s *server) Start() {
 
 func (s *server) initRouters() {
 	s.Router.GET("/ping", s.ping)
-	s.Router.GET("/oauth", s.getOauthToken)
+	s.Router.GET("/get/", s.getGeneralFollows)
 }
 
 func (s *server) ping(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "ping"})
 }
 
-func (s *server) getOauthToken(c *gin.Context) {
-	response, err := s.queries.GetOauthToken()
+func (s *server) getGeneralFollows(c *gin.Context) {
+	nicknames := c.QueryArray("login")
+	response, err := s.queries.GetUsersInfo(nicknames)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	result := make(map[string]string)
+	resp, err := s.queries.GetFollows(response.Data[0].Id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	for _, v := range *resp{
+		result[v.ToName] = v.ToName
+	}
+
+	for i := 1; i < len(response.Data); i++{
+		newMap := make(map[string]string)
+		resp, err := s.queries.GetFollows(response.Data[i].Id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+		for _, v := range *resp{
+			_, ok := result[v.ToName]
+			if ok {
+				newMap[v.ToName] = v.ToName
+			}
+		}
+		result = newMap
+
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *server) GetFollows(c *gin.Context){
+	response, err := s.queries.GetFollows("171985899")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
