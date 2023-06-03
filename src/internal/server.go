@@ -21,6 +21,16 @@ func (s *server) Start(port int) {
 }
 
 func (s *server) initRouters() {
-	s.router.GET("/ping", s.service.Ping)
-	s.router.GET("/get", s.service.GetGeneralFollows)
+	s.router.GET("/ping", s.ping)
+	s.router.GET("/get", s.getGeneralFollows)
+}
+
+func (s *server) ping(c *gin.Context) {
+	response := s.service.Ping()
+	c.JSON(response.StatusCode, response)
+}
+
+func (s *server) getGeneralFollows(c *gin.Context) {
+	response := s.service.GetGeneralFollows(c.QueryArray("login"))
+	c.JSON(response.StatusCode, response)
 }

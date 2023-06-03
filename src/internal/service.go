@@ -3,7 +3,6 @@ package internal
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/modaniru/twitch-general-follows/src/twitch"
 )
 
@@ -11,16 +10,28 @@ type Service struct {
 	queries twitch.Queries
 }
 
+type response struct {
+	StatusCode int         `json:"status_code"`
+	Message    string      `json:"message"`
+	Object     interface{} `json:"data"`
+}
+
+func newResponse(statusCode int, message string, object interface{}) *response {
+	return &response{
+		StatusCode: statusCode,
+		Message:    message,
+		Object:     object,
+	}
+}
+
 func NewService(queries twitch.Queries) *Service {
 	return &Service{queries: queries}
 }
 
-func (s *Service) GetGeneralFollows(c *gin.Context) {
-	nicknames := c.QueryArray("login")
+func (s *Service) GetGeneralFollows(nicknames []string) *response {
 	usersInfo, err := s.queries.GetUsersInfo(nicknames, "login")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
+		return newResponse(http.StatusBadRequest, err.Error(), nil)
 	}
 	generalFollows := make(map[string]bool)
 	channel := make(chan *[]twitch.FollowInfo)
@@ -31,8 +42,7 @@ func (s *Service) GetGeneralFollows(c *gin.Context) {
 	}
 	followList := <-channel
 	if followList == nil {
-		c.JSON(http.StatusBadRequest, "")
-		return
+		return newResponse(http.StatusBadRequest, err.Error(), nil)
 	}
 	for _, v := range *followList {
 		generalFollows[v.ToId] = true
@@ -41,8 +51,7 @@ func (s *Service) GetGeneralFollows(c *gin.Context) {
 		newGeneralFollows := make(map[string]bool)
 		followList = <-channel
 		if followList == nil {
-			c.JSON(http.StatusBadRequest, "")
-			return
+			return newResponse(http.StatusBadRequest, err.Error(), nil)
 		}
 		for _, v := range *followList {
 			if generalFollows[v.ToId] {
@@ -59,12 +68,11 @@ func (s *Service) GetGeneralFollows(c *gin.Context) {
 	}
 	response, err := s.queries.GetUsersInfo(idsList, "id")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
+		return newResponse(http.StatusBadRequest, err.Error(), nil)
 	}
-	c.JSON(http.StatusOK, response)
+	return newResponse(200, "", response)
 }
 
-func (s *Service) Ping(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "ping"})
+func (s *Service) Ping() *response {
+	return newResponse(200, "ping", nil)
 }

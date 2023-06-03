@@ -94,7 +94,7 @@ func (q *Queries) GetUsersInfo(data []string, dataType string) (*[]UserInfo, err
 	for i := 0; i < iterations; i++ {
 		userCollection := <-channel
 		if userCollection == nil {
-			return nil, errors.New("GetUsersInfo(nicknames []string)")
+			return nil, errors.New("invalid user(s)")
 		}
 		res = append(res, userCollection.Data...)
 	}
