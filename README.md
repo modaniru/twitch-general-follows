@@ -58,4 +58,34 @@ ___
 ___
 ## Endpoints
 * /get?login=modaniru&login=... - get general follows
+```javascript
+{
+  "status_code": int
+  "message": string
+  "data":
+    [
+      {
+        "id": string,
+        "login": string,
+        "display_name": string,
+        "type": string,
+        "broadcaster_type": string,
+        "description": string,
+        "profile_image_url": string,
+        "offline_image_url": string,
+        "view_count": int,
+        "email": string,
+        "created_at": string
+      },
+      ...
+    ]
+}
+```
 * /ping - test server endpoint
+```javascript
+{
+  "status_code": int
+  "message": string
+  "data": null
+}
+```
