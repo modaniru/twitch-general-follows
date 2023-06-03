@@ -1,8 +1,17 @@
-build:
-	go build src/main.go
-run:
+.PHONY: build
+build: install
+	go build -o twitch-general-follows-api src/main.go 
+
+.PHONY: run
+run: fmt
 	go run src/main.go
-fmt:
+
+.PHONY: fmt
+fmt: install
 	go fmt ./...
-get:
-	go get
+
+.PHONY: install
+install:
+	go mod download
+
+.DEFAULT_GOAL := run

@@ -9,28 +9,30 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/gojek/heimdall/v7/httpclient"
 )
 
-type Queries struct {
-	UserInfoURI          string `toml:"user_info"`
-	UserGetFollowListURI string `toml:"user_get_follow_list"`
-	GetTokenURI          string `toml:"get_token"`
-	ValidateToken        string `toml:"validate_token"`
+const UserInfoURI = "https://api.twitch.tv/helix/users"
+const UserGetFollowListURI = "https://api.twitch.tv/helix/users/follows"
+const GetTokenURI = "https://id.twitch.tv/oauth2/token"
+const ValidateTokenURI = "https://id.twitch.tv/oauth2/validate"
 
-	ClientId     string `toml:"client_id"`
-	ClientSecret string `toml:"client_secret"`
+type Queries struct {
+	clientId     string
+	clientSecret string
 
 	client *httpclient.Client
 	token  string
 }
 
-func NewQueries(cfgPath string) *Queries {
+func NewQueries(clientId, clientSecret string) *Queries {
 	timeout := 10 * time.Second
 	client := httpclient.NewClient(httpclient.WithHTTPTimeout(timeout))
-	queries := Queries{client: client}
-	toml.DecodeFile(cfgPath, &queries)
+	queries := Queries{
+		client:       client,
+		clientId:     clientId,
+		clientSecret: clientSecret,
+	}
 	token, err := queries.GetOauthToken()
 	if err != nil {
 		log.Fatal(err)
@@ -40,7 +42,7 @@ func NewQueries(cfgPath string) *Queries {
 }
 
 func (q *Queries) GetOauthToken() (*OauthToken, error) {
-	uri := fmt.Sprintf("%s?client_id=%s&client_secret=%s&grant_type=client_credentials", q.GetTokenURI, q.ClientId, q.ClientSecret)
+	uri := fmt.Sprintf("%s?client_id=%s&client_secret=%s&grant_type=client_credentials", GetTokenURI, q.clientId, q.clientSecret)
 	res, err := q.client.Post(uri, nil, nil)
 	if err != nil {
 		return nil, err
@@ -59,7 +61,7 @@ func (q *Queries) GetOauthToken() (*OauthToken, error) {
 }
 
 func (q *Queries) IsValid() (*ValidToken, error) {
-	uri := q.ValidateToken
+	uri := ValidateTokenURI
 	token := "OAuth " + q.token
 	header := http.Header{}
 	header.Add("Authorization", token)
@@ -100,7 +102,7 @@ func (q *Queries) GetUsersInfo(data []string, dataType string) (*[]UserInfo, err
 }
 
 func (q *Queries) getUsersInfoRoutine(users []string, t string, channel chan *UserCollection) {
-	uri := q.UserInfoURI
+	uri := UserInfoURI
 	for i, v := range users {
 		symb := "&"
 		if i == 0 {
@@ -109,9 +111,9 @@ func (q *Queries) getUsersInfoRoutine(users []string, t string, channel chan *Us
 		uri = fmt.Sprintf("%s%s%s=%s", uri, symb, t, v)
 	}
 	header := http.Header{}
-	token := "Bearer " + "udbafm1cghmrgy9aw9xf707360ibwp"
+	token := "Bearer " + q.getToken()
 	header.Add("Authorization", token)
-	header.Add("Client-Id", q.ClientId)
+	header.Add("Client-Id", q.clientId)
 	res, err := q.client.Get(uri, header)
 	if err != nil {
 		channel <- nil
@@ -146,7 +148,7 @@ func (q *Queries) getToken() string {
 // go routine
 func (q *Queries) GetFollows(id string, ch chan *[]FollowInfo) {
 	channel := make(chan *FollowsCollection)
-	uri := fmt.Sprintf("%s?from_id=%s&first=%d", q.UserGetFollowListURI, id, 100)
+	uri := fmt.Sprintf("%s?from_id=%s&first=%d", UserGetFollowListURI, id, 100)
 	go q.getFollowsWithoutPagination(uri, channel)
 	response := <-channel
 	var result []FollowInfo
@@ -168,7 +170,7 @@ func (q *Queries) getFollowsWithoutPagination(uri string, channel chan *FollowsC
 	header := http.Header{}
 	token := "Bearer " + q.getToken()
 	header.Add("Authorization", token)
-	header.Add("Client-Id", q.ClientId)
+	header.Add("Client-Id", q.clientId)
 	res, err := q.client.Get(uri, header)
 	if err != nil || res.StatusCode != 200 {
 		channel <- nil
