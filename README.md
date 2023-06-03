@@ -8,16 +8,7 @@ API needs config.toml and twitch-cfg.toml files
 
 * config.toml
 ```toml
-port=":8080"
-```
-* twitch-cgf.toml
-```
-user_info="https://api.twitch.tv/helix/users"
-user_get_follow_list="https://api.twitch.tv/helix/users/follows"
-get_token="https://id.twitch.tv/oauth2/token"
-validate_token="https://id.twitch.tv/oauth2/validate"
-
-
+port=8080
 client_id="id"
 client_secret="secret"
 ```
@@ -37,18 +28,25 @@ ___
   cd twitch-general-follows
 ~~~
 ___
+*hint: you can start this API and download all dependencies 
+with one conmmand (if you can run Makefile commands)*
+* run
+~~~bash
+make
+~~~ 
+* build
+~~~bash
+make build
+~~~
+below contains information how run API without Make.
+___
 3. Install dependencies  
 
 ~~~bash  
-  go get
+  go mod install
 ~~~
 ___
 4. Start the server:
-
-~~~bash  
-  make run
-~~~
-or
 ~~~bash  
   go run src/main.go
 ~~~
@@ -60,4 +58,34 @@ ___
 ___
 ## Endpoints
 * /get?login=modaniru&login=... - get general follows
+```javascript
+{
+  "status_code": int
+  "message": string
+  "data":
+    [
+      {
+        "id": string,
+        "login": string,
+        "display_name": string,
+        "type": string,
+        "broadcaster_type": string,
+        "description": string,
+        "profile_image_url": string,
+        "offline_image_url": string,
+        "view_count": int,
+        "email": string,
+        "created_at": string
+      },
+      ...
+    ]
+}
+```
 * /ping - test server endpoint
+```javascript
+{
+  "status_code": int
+  "message": string
+  "data": null
+}
+```

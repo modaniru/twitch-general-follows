@@ -7,7 +7,9 @@ import (
 )
 
 type configauration struct {
-	Port string `toml:"port"`
+	Port         int    `toml:"port"`
+	ClientId     string `toml:"client_id"`
+	ClientSecret string `toml:"client_secret"`
 }
 
 func NewConfiguration(configPath string) *configauration {
