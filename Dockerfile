@@ -2,10 +2,10 @@ FROM golang
 
 WORKDIR /app
 
-COPY . .
-
+COPY go.* /.
 RUN go mod download
 
+COPY . .
 RUN go build -o /main ./src/main.go 
 
-CMD ["/main"]
+CMD /main
