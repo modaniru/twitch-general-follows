@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log"
-
 	"github.com/modaniru/twitch-general-follows/src/internal"
 	"github.com/modaniru/twitch-general-follows/src/twitch"
 	"github.com/spf13/viper"
+	"log"
 )
 
 func main() {
+	// Init config.yaml
 	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
