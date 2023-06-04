@@ -6,11 +6,11 @@ API that returns list of general follows by nickname
 
 API needs config.toml and twitch-cfg.toml files
 
-* config.toml
+* config.yaml
 ```toml
-port=8080
-client_id="id"
-client_secret="secret"
+port: 8080
+client_id: id
+client_secret: secret
 ```
 ___
 
